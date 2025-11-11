@@ -1,7 +1,7 @@
 // --- CONFIGURATION ---
 // 1. Get your token from https://huggingface.co/settings/tokens
 // 2. Paste it here (keep it private!)
-const HF_API_KEY = "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";
+const HF_API_KEY = "h-fase_api";
 
 // 3. Updated Hugging Face inference endpoints (new router API)
 // const SUMMARIZER_API_URL = "https://router.huggingface.co/hf-inference/models/Abhiee12/my-summarizer-model";
