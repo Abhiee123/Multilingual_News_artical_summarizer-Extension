@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { width: 350px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 10px; background-color: #f9f9f9; }
+        h1 { font-size: 16px; color: #333; margin: 0 0 10px 0; font-weight: 600; }
+        
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .controls label { font-size: 13px; color: #555; }
+        .controls select { border-radius: 5px; padding: 5px; border: 1px solid #ddd; }
+
+        button { width: 100%; padding: 10px; background: #007aff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        button:hover { background: #0056b3; }
+
+        #loading { text-align: center; color: #777; font-style: italic; display: none; margin-top: 15px; }
+        #results { margin-top: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 5px; padding: 10px; }
+        #results h3 { font-size: 14px; margin: 0 0 5px 0; color: #111; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        #results p { font-size: 13px; line-height: 1.5; margin: 5px 0 0 0; color: #333; }
+        #error { color: #d93025; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <h1>My AI Article Analyzer</h1>
+
+    <div class="controls">
+        <label for="language">Translate Summary to:</label>
+        <select id="language">
+            <option value="en">English (Original)</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="hi">Hindi</option>
+        </select>
+    </div>
+
+    <button id="analyze-btn">Analyze this Article</button>
+    <div id="loading">
+        <p>Calling your models...</p>
+    </div>
+    <div id="results"></div>
+    <script src="popup.js"></script>
+</body>
+</html>
