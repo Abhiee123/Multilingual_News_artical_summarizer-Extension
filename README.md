@@ -1,258 +1,94 @@
-<!--
-Files included below:
-1) manifest.json (Manifest V3)
-2) popup.html
-3) popup.js (reads token from chrome.storage.local)
-4) options.html (simple UI to save token locally)
-5) options.js
-6) styles.css
+Multilingual News Article Summarizer & Analyzer Extension
 
-Paste each file into your extension folder and load the unpacked extension in Chrome (chrome://extensions).
-Do NOT commit your token to GitHub. Use the options page to store the token locally.
--->
+This Chrome extension analyzes any news article you are reading. It uses a custom-trained T5 model (hosted on Hugging Face) for summarization, a public sentiment model for analysis, and public translation models to provide a multilingual experience.
 
+Features
 
-/* ===== manifest.json ===== */
-{
-  "manifest_version": 3,
-  "name": "My AI Analyzer",
-  "version": "1.0",
-  "description": "Summarize and analyze news articles using Hugging Face models (token kept locally).",
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": "icon.png"
-  },
-  "options_page": "options.html",
-  "permissions": [
-    "storage",
-    "activeTab",
-    "scripting"
-  ],
-  "icons": {
-    "48": "icon.png",
-    "128": "icon.png"
-  }
-}
+One-Click Analysis: Get a summary and sentiment analysis of any news article.
 
+Custom T5 Model: Uses a fine-tuned T5 model for high-quality summarization.
 
-<!-- ===== popup.html ===== -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>My AI Analyzer</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <div class="container">
-    <header>
-      <img src="icon.png" alt="icon" class="icon">
-      <h1>AI Analyzer</h1>
-    </header>
+Sentiment Analysis: Understands the tone of the article (e.g., positive, negative, neutral).
 
-    <main>
-      <label for="language">Output language</label>
-      <select id="language">
-        <option value="en">English</option>
-        <option value="hi">Hindi</option>
-        <option value="es">Spanish</option>
-        <option value="fr">French</option>
-      </select>
+Multilingual Support: Can process and translate content into various languages.
 
-      <button id="analyze">Analyze this Article</button>
+Prerequisites
 
-      <section id="result" class="hidden">
-        <h2>Summary</h2>
-        <div id="summary" class="box"></div>
+Before you begin, you will need:
 
-        <h2>Sentiment</h2>
-        <div id="sentiment" class="box"></div>
+A Hugging Face account.
 
-        <small class="note">Token is stored locally. Manage it from the Options page.</small>
-      </section>
+A Hugging Face Access Token. You can generate one from your settings:
 
-      <div id="loading" class="hidden">Analyzing... please wait.</div>
-    </main>
+Go to https://huggingface.co/settings/tokens
 
-    <footer>
-      <a id="open-options" href="#">Manage Token (Options)</a>
-    </footer>
-  </div>
+Create a new token (a "read" permission token should be sufficient).
 
-  <script src="popup.js"></script>
-</body>
-</html>
+Copy this token securely.
+
+Installation and Setup
+
+Follow these steps to install and configure the extension.
+
+1. Configure Your Credentials
+
+This is a critical step. The extension will not work until you add your Hugging Face details.
+
+Open the popup.js file in a text editor.
+
+Find Line 5 and replace "hf_YOUR_API_TOKEN_HERE" with your actual Hugging Face token.
+
+Find Line 8 and replace "YOUR-HF-USERNAME" with your Hugging Face username.
+
+Before:
+
+// popup.js (Example)
+...
+const HF_TOKEN = "hf_YOUR_API_TOKEN_HERE";
+...
+const HF_USERNAME = "YOUR-HF-USERNAME";
+...
 
 
-/* ===== styles.css ===== */
-:root{
-  --bg:#fafafa;
-  --card:#ffffff;
-  --accent:#3b82f6;
-  --muted:#6b7280;
-}
-*{box-sizing:border-box}
-body{font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);margin:0;padding:12px}
-.container{width:360px}
-header{display:flex;align-items:center;gap:10px}
-.icon{width:36px;height:36px}
-h1{font-size:18px;margin:0}
-label{display:block;margin-top:12px;font-weight:600}
-select,button{width:100%;padding:8px;margin-top:6px;border-radius:8px;border:1px solid #e5e7eb}
-button{background:var(--accent);color:white;border:none;cursor:pointer}
-.box{background:var(--card);padding:10px;border-radius:8px;border:1px solid #e5e7eb;min-height:60px}
-.hidden{display:none}
-.note{display:block;margin-top:8px;color:var(--muted)}
-footer{margin-top:12px;text-align:center}
-footer a{color:var(--accent);text-decoration:none}
+After:
+
+// popup.js (Example)
+...
+const HF_TOKEN = "hf_aBcDeFgHiJkLmNoPqRsTuVwXyZ123456";
+...
+const HF_USERNAME = "datasciencelover22";
+...
 
 
-// ===== popup.js =====
-// This script reads the token from chrome.storage.local and then calls the Hugging Face APIs.
-// IMPORTANT: Do not hardcode your token. Use the Options page to set it locally.
+2. Load the Extension in Chrome
 
-(async () => {
-  const el = id => document.getElementById(id);
-  const analyzeBtn = el('analyze');
-  const languageSelect = el('language');
-  const resultSection = el('result');
-  const summaryDiv = el('summary');
-  const sentimentDiv = el('sentiment');
-  const loadingDiv = el('loading');
-  const openOptions = el('open-options');
+Open the Google Chrome browser.
 
-  openOptions.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (chrome.runtime.openOptionsPage) chrome.runtime.openOptionsPage();
-    else window.open(chrome.runtime.getURL('options.html'));
-  });
+Navigate to the URL chrome://extensions.
 
-  analyzeBtn.addEventListener('click', async () => {
-    // show loader
-    loadingDiv.classList.remove('hidden');
-    resultSection.classList.add('hidden');
+Enable "Developer mode" using the toggle switch in the top-right corner.
 
-    // get token from storage
-    chrome.storage.local.get(['hf_token', 'hf_username'], async (items) => {
-      const token = items.hf_token;
-      const username = items.hf_username || 'YOUR-HF-USERNAME';
+Click the "Load unpacked" button that appears on the top-left.
 
-      if (!token) {
-        loadingDiv.classList.add('hidden');
-        alert('Hugging Face token not found. Please open Options and add it locally.');
-        return;
-      }
+Select the entire folder where these project files (including popup.js, manifest.json, etc.) are located.
 
-      // get the active tab's article text
-      try{
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+The extension should now appear in your list.
 
-        // Inject a small content script to extract article text (simple approach)
-        const [{ result: articleText }] = await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: () => {
-            // Basic article extraction: try article tag then paragraphs
-            const article = document.querySelector('article');
-            if (article) return article.innerText;
-            return Array.from(document.querySelectorAll('p')).map(p => p.innerText).join('\n\n');
-          }
-        });
+How to Use
 
-        // prepare inputs
-        const inputText = articleText.slice(0, 30000); // limit size
-        const language = languageSelect.value;
+Pin the Extension: Click the puzzle piece icon in your Chrome toolbar and "pin" the AI Analyzer Extension to make it easily accessible.
 
-        // Call Hugging Face Inference API for summarization (example: T5 model hosted under your account)
-        const summaryResponse = await fetch(`https://api-inference.huggingface.co/models/${username}/your-t5-model`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ inputs: inputText, parameters: { max_new_tokens: 150 } })
-        });
+Navigate to an Article: Go to any news article webpage.
 
-        const summaryData = await summaryResponse.json();
-        const summaryText = Array.isArray(summaryData) ? (summaryData[0].generated_text || summaryData[0].summary_text || JSON.stringify(summaryData)) : (summaryData.generated_text || JSON.stringify(summaryData));
+Run Analysis:
 
-        // Call sentiment model (public)
-        const sentimentResponse = await fetch('https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ inputs: summaryText })
-        });
-        const sentimentData = await sentimentResponse.json();
+Click the extension's icon in your toolbar.
 
-        // show results
-        summaryDiv.innerText = summaryText;
-        sentimentDiv.innerText = JSON.stringify(sentimentData, null, 2);
-        resultSection.classList.remove('hidden');
+Choose your desired language from the dropdown menu.
 
-      } catch (err) {
-        console.error(err);
-        alert('Error extracting or analyzing the page. See console for details.');
-      } finally {
-        loadingDiv.classList.add('hidden');
-      }
-    });
-  });
-})();
+Click the "Analyze this Article" button.
 
+View Results: The extension popup will display the summary and sentiment analysis.
 
-/* ===== options.html ===== */
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Options - My AI Analyzer</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>Extension Options</h1>
-    </header>
-
-    <main>
-      <label for="hf_token">Hugging Face Token</label>
-      <input id="hf_token" placeholder="hf_xxx..." />
-
-      <label for="hf_username">Hugging Face Username</label>
-      <input id="hf_username" placeholder="your-hf-username" />
-
-      <button id="save">Save Locally</button>
-      <div id="status" class="note"></div>
-    </main>
-  </div>
-  <script src="options.js"></script>
-</body>
-</html>
-
-
-// ===== options.js =====
-document.addEventListener('DOMContentLoaded', () => {
-  const id = (s) => document.getElementById(s);
-  const tokenInput = id('hf_token');
-  const usernameInput = id('hf_username');
-  const saveBtn = id('save');
-  const status = id('status');
-
-  // load existing values
-  chrome.storage.local.get(['hf_token','hf_username'], (items) => {
-    if (items.hf_token) tokenInput.value = items.hf_token;
-    if (items.hf_username) usernameInput.value = items.hf_username;
-  });
-
-  saveBtn.addEventListener('click', () => {
-    const token = tokenInput.value.trim();
-    const username = usernameInput.value.trim();
-    if (!token) { status.innerText = 'Please enter a token.'; return; }
-    chrome.storage.local.set({ hf_token: token, hf_username: username }, () => {
-      status.innerText = 'Saved locally. Token will not be pushed to GitHub.';
-      setTimeout(() => status.innerText = '', 3000);
-    });
-  });
-});
-
- 
 
 
